@@ -1,0 +1,414 @@
+/* Markdown渲染样式 */
+.markdown-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* 标题样式 - 农业主题色调 */
+.markdown-content h1 {
+    font-size: 1.75em;
+    color: #2e7d32;
+    /* 深绿色 */
+    margin: 1.5em 0 0.8em;
+    padding: 0.5em 0 0.5em 0.5em;
+    border-left: 5px solid #2e7d32;
+    background: linear-gradient(to right, rgba(46, 125, 50, 0.1), transparent);
+    font-weight: 700;
+    border-radius: 0 0.25em 0.25em 0;
+}
+
+.markdown-content h2 {
+    font-size: 1.5em;
+    color: #388e3c;
+    /* 中绿色 */
+    margin: 1.2em 0 0.7em;
+    padding: 0.4em 0 0.4em 0.5em;
+    border-left: 4px solid #388e3c;
+    background: linear-gradient(to right, rgba(56, 142, 60, 0.08), transparent);
+    font-weight: 600;
+    border-radius: 0 0.25em 0.25em 0;
+}
+
+.markdown-content h3 {
+    font-size: 1.3em;
+    color: #43a047;
+    /* 浅绿色 */
+    margin: 1em 0 0.6em;
+    padding: 0.3em 0 0.3em 0.5em;
+    border-left: 3px solid #43a047;
+    background: linear-gradient(to right, rgba(67, 160, 71, 0.06), transparent);
+    font-weight: 600;
+    border-radius: 0 0.25em 0.25em 0;
+}
+
+.markdown-content h4 {
+    font-size: 1.15em;
+    color: #4caf50;
+    /* 更浅的绿色 */
+    margin: 0.9em 0 0.5em;
+    padding-left: 0.5em;
+    border-left: 2px solid #4caf50;
+    font-weight: 600;
+}
+
+.markdown-content h5 {
+    font-size: 1.05em;
+    color: #66bb6a;
+    /* 最浅的绿色 */
+    margin: 0.8em 0 0.4em;
+    font-weight: 600;
+}
+
+.markdown-content h6 {
+    font-size: 1em;
+    color: #81c784;
+    /* 非常浅的绿色 */
+    margin: 0.7em 0 0.3em;
+    font-weight: 600;
+}
+
+/* 段落样式 */
+.markdown-content p {
+    margin: 0.8em 0;
+    line-height: 1.7;
+}
+
+/* 列表样式 */
+.markdown-content ul,
+.markdown-content ol {
+    padding-left: 2em;
+    margin: 0.8em 0;
+}
+
+.markdown-content ul {
+    list-style-type: disc;
+}
+
+.markdown-content ol {
+    list-style-type: decimal;
+}
+
+/* 增强列表项可见性 */
+.markdown-content li {
+    margin: 0.5em 0;
+    position: relative;
+    padding-left: 0.3em;
+}
+
+/* 嵌套列表样式 */
+.markdown-content ol ol {
+    list-style-type: lower-alpha;
+}
+
+.markdown-content ol ol ol {
+    list-style-type: lower-roman;
+}
+
+/* 列表项标记样式 */
+.markdown-content ul>li::marker {
+    color: #2e7d32;
+    /* 深绿色 */
+    font-weight: bold;
+}
+
+.markdown-content ol>li::marker {
+    color: #2e7d32;
+    /* 深绿色 */
+    font-weight: bold;
+}
+
+/* 多级列表样式 */
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+    margin: 0.4em 0 0.4em 1em;
+}
+
+.markdown-content ul ul>li,
+.markdown-content ol ol>li {
+    margin: 0.3em 0;
+}
+
+.markdown-content ul ul>li::marker {
+    color: #388e3c;
+    /* 中绿色 */
+}
+
+.markdown-content ol ol>li::marker {
+    color: #388e3c;
+    /* 中绿色 */
+}
+
+.markdown-content ul ul ul>li::marker,
+.markdown-content ol ol ol>li::marker {
+    color: #43a047;
+    /* 浅绿色 */
+}
+
+/* 提高列表项和段落之间的关系清晰度 */
+.markdown-content li p {
+    margin: 0.3em 0;
+    display: inline-block;
+}
+
+/* 防止嵌套列表的缩进太多 */
+.markdown-content li>ul,
+.markdown-content li>ol {
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+}
+
+/* 代码样式 */
+.markdown-content code {
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+    padding: 0.2em 0.4em;
+    margin: 0 0.2em;
+    font-size: 0.9em;
+    color: #d63384;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.markdown-content pre {
+    background-color: #f6f8fa;
+    border-radius: 5px;
+    padding: 1em;
+    overflow-x: auto;
+    margin: 1em 0;
+    border: 1px solid #e1e4e8;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9em;
+    color: #333;
+    overflow-wrap: normal;
+    white-space: pre;
+    border: none;
+}
+
+/* 引用样式 */
+.markdown-content blockquote {
+    border-left: 4px solid #4caf50;
+    /* 绿色边框 */
+    color: #444;
+    padding: 0.5em 1em;
+    margin: 1em 0;
+    background-color: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+}
+
+.markdown-content blockquote p {
+    margin: 0.5em 0;
+}
+
+/* 表格样式 */
+.markdown-content .table-container {
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+    border: 1px solid #dfe2e5;
+    padding: 0.6em 1em;
+    text-align: left;
+}
+
+.markdown-content table th {
+    background-color: #f0f4f0;
+    /* 浅绿色背景 */
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.markdown-content table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
+
+/* 链接样式 */
+.markdown-content a {
+    color: #1976d2;
+    text-decoration: none;
+    border-bottom: 1px dotted #1976d2;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.markdown-content a:hover {
+    color: #1565c0;
+    border-bottom-color: #1565c0;
+}
+
+/* 图片样式 */
+.markdown-content img {
+    max-width: 100%;
+    margin: 1em 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 分割线样式 */
+.markdown-content hr {
+    height: 2px;
+    background: linear-gradient(to right, #2e7d32, transparent);
+    border: 0;
+    margin: 2em 0;
+}
+
+/* 强调和加粗 */
+.markdown-content strong {
+    font-weight: 700;
+    color: #2e7d32;
+    /* 深绿色 */
+}
+
+.markdown-content em {
+    font-style: italic;
+    color: #388e3c;
+}
+
+/* 删除线 */
+.markdown-content del {
+    text-decoration: line-through;
+    color: #888;
+}
+
+/* 标记和高亮 */
+.markdown-content mark {
+    background-color: #fff9c4;
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+}
+
+/* 代码高亮样式 */
+.markdown-content .hljs {
+    background: transparent;
+    color: #333;
+}
+
+.markdown-content .hljs-keyword,
+.markdown-content .hljs-selector-tag,
+.markdown-content .hljs-built_in,
+.markdown-content .hljs-name,
+.markdown-content .hljs-tag {
+    color: #0033b3;
+}
+
+.markdown-content .hljs-string,
+.markdown-content .hljs-title,
+.markdown-content .hljs-section,
+.markdown-content .hljs-attribute,
+.markdown-content .hljs-literal,
+.markdown-content .hljs-template-tag,
+.markdown-content .hljs-template-variable,
+.markdown-content .hljs-type,
+.markdown-content .hljs-addition {
+    color: #067d17;
+}
+
+.markdown-content .hljs-comment,
+.markdown-content .hljs-quote,
+.markdown-content .hljs-meta,
+.markdown-content .hljs-deletion {
+    color: #717171;
+}
+
+.markdown-content .hljs-function,
+.markdown-content .hljs-subst {
+    color: #000000;
+}
+
+.markdown-content .hljs-number,
+.markdown-content .hljs-regexp,
+.markdown-content .hljs-literal {
+    color: #1750eb;
+}
+
+/* 特别优化有序列表的显示 */
+.markdown-content ol {
+    counter-reset: item;
+    list-style-type: decimal;
+    padding-left: 2.5em;
+}
+
+.markdown-content ol>li {
+    display: block;
+    position: relative;
+}
+
+.markdown-content ol>li::before {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+/* 确保列表项标记和内容间距适当 */
+.markdown-content li {
+    padding-left: 0.5em;
+    margin: 0.6em 0;
+}
+
+/* 解决嵌套列表的内边距问题 */
+.markdown-content li>ol,
+.markdown-content li>ul {
+    margin: 0.5em 0 0.5em 0.5em;
+}
+
+/* 适应不同格式的列表 */
+.markdown-content p+ol,
+.markdown-content p+ul {
+    margin-top: 0.3em;
+}
+
+.markdown-content p {
+    position: relative;
+}
+
+/* 修复特殊列表格式，如"1. 内容"开头的段落 */
+.markdown-content .list-like-paragraph {
+    position: relative;
+    padding-left: 2em;
+    margin: 0.7em 0;
+    display: flex;
+}
+
+.markdown-content .list-like-paragraph .list-number {
+    position: absolute;
+    left: 0;
+    color: #2e7d32;
+    font-weight: bold;
+    margin-right: 0.5em;
+    min-width: 1.5em;
+    text-align: right;
+}
+
+/* 处理嵌套在其他元素中的列表式样式 */
+.markdown-content .list-like-inline {
+    position: relative;
+    padding-left: 2em;
+    display: inline-block;
+    margin: 0.3em 0;
+}
+
+.markdown-content .list-like-inline .list-number {
+    position: absolute;
+    left: 0;
+    color: #2e7d32;
+    font-weight: bold;
+    margin-right: 0.5em;
+    min-width: 1.5em;
+    text-align: right;
+}

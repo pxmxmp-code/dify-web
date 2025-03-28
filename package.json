@@ -1,0 +1,29 @@
+{
+  "name": "dify-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.0.17",
+    "axios": "^1.8.4",
+    "dify-client": "^2.3.2",
+    "highlight.js": "^11.11.1",
+    "lucide-vue-next": "^0.484.0",
+    "markdown-it": "^14.1.0",
+    "marked": "^15.0.7",
+    "pinia": "^3.0.1",
+    "tailwindcss": "^4.0.17",
+    "uuid": "^11.1.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.2.1",
+    "vite-plugin-vue-devtools": "^7.7.2"
+  }
+}

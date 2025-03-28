@@ -1,0 +1,69 @@
+# 依赖目录
+node_modules
+.pnp
+.pnp.js
+
+# 构建输出
+dist
+dist-ssr
+*.local
+coverage
+
+# 日志
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 编辑器目录和文件
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# 本地环境变量
+.env
+.env.local
+.env.*.local
+
+# 缓存目录
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.node_repl_history
+
+# 测试覆盖率目录
+coverage
+.nyc_output
+
+# 调试文件
+debug.log
+yarn.lock.error
+
+# 临时文件
+.temp
+.tmp
+.cache
+
+# 打包工具生成的文件
+.rollup.cache
+tsconfig.tsbuildinfo
