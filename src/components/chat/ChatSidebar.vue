@@ -29,22 +29,20 @@
         <div 
           v-for="conversation in recentConversations" 
           :key="conversation.id"
-          class="flex w-full items-center group justify-between py-2 px-4 text-gray-600 hover:text-gray-900 hover:bg-green-50 transition-colors duration-200 rounded-md"
+          class="conversation-item flex w-full items-center group justify-between py-2 px-4 text-gray-600 hover:text-gray-900 hover:bg-green-50 transition-colors duration-200 rounded-md cursor-pointer"
           :class="{ 
-            'bg-green-50 text-green-700': conversation.id === conversationId 
+            'bg-green-50 text-green-700 active-conversation': conversation.id === conversationId 
           }"
+          @click="$emit('switch-conversation', conversation.id, conversation.name)"
         >
-          <button 
-            class="flex items-center flex-1 min-w-0 text-left transform hover:translate-x-1"
-            @click="$emit('switch-conversation', conversation.id, conversation.name)"
-          >
+          <div class="flex items-center flex-1 min-w-0 text-left">
             <MessageSquareIcon class="h-4 w-4 mr-2 flex-shrink-0 text-green-500" />
             <span class="truncate">{{ conversation.name }}</span>
-          </button>
+          </div>
           
           <button 
             class="ml-2 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity duration-200 flex-shrink-0"
-            @click="$emit('delete-conversation', conversation.id)"
+            @click.stop="$emit('delete-conversation', conversation.id)"
           >
             <XIcon class="h-3.5 w-3.5" />
           </button>
@@ -137,5 +135,40 @@ export default {
 .conversation-list::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 20px;
+}
+
+/* 会话项交互效果 */
+.conversation-list .conversation-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.conversation-list .conversation-item:hover {
+  transform: translateX(2px);
+}
+
+.conversation-list .conversation-item:active {
+  transform: translateX(3px) scale(0.99);
+}
+
+.conversation-list .conversation-item::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 60%;
+  background-color: #22c55e;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.conversation-list .conversation-item:hover::after {
+  width: 3px;
+}
+
+.conversation-list .active-conversation::after {
+  width: 3px;
 }
 </style> 

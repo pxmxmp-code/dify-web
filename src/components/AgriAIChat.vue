@@ -80,7 +80,8 @@ export default {
       startNewChat, 
       switchConversation, 
       deleteConversation, 
-      loadConversations 
+      loadConversations,
+      updateTempIdToReal
     } = useConversation();
     
     const { 
@@ -93,9 +94,20 @@ export default {
       loadHistoryMessages,
       stopResponse,
       toggleReferences
-    } = useMessages(conversationId);
+    } = useMessages(conversationId, loadConversations, updateTempIdToReal);
     
     const { handleFeedback } = useFeedback(messages);
+    
+    // 重新包装startNewChat函数，以确保消息列表在新对话时被正确重置
+    const handleStartNewChat = async () => {
+      const result = await startNewChat();
+      
+      // 无论返回结果如何，都清空消息列表，确保新会话为空白
+      console.log('创建新会话，清空消息列表');
+      messages.value = [];
+      
+      return result;
+    };
     
     // 发送消息包装函数
     const handleSendMessage = () => {
@@ -142,7 +154,7 @@ export default {
       messagesContainer,
       
       // 方法
-      startNewChat,
+      startNewChat: handleStartNewChat,
       switchConversation,
       deleteConversation,
       handleSendMessage,

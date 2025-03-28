@@ -2,7 +2,7 @@ import { ref, watch } from 'vue';
 import agriAIApi from '../utils/api';
 import storageService from '../utils/storage';
 
-export function useMessages(conversationId) {
+export function useMessages(conversationId, loadConversations, updateTempIdToReal) {
   // 状态变量
   const messages = ref([]);
   const isTyping = ref(false);
@@ -11,8 +11,14 @@ export function useMessages(conversationId) {
   const referenceDocuments = ref([]);
   const currentTaskId = ref('');
   
+  // 标记是否正在进行ID更新，避免重复加载
+  const isUpdatingId = ref(false);
+  
   // 用户ID
   const userId = ref(storageService.getUserId());
+  
+  // 记录上一个ID，用于判断是否是从临时ID切换到真实ID
+  let previousId = conversationId.value;
   
   // 发送消息
   const handleSendMessage = async (content) => {
@@ -99,8 +105,11 @@ export function useMessages(conversationId) {
         response_mode: 'streaming'
       };
       
-      // 添加会话ID
-      if (conversationId.value && isValidUUID(conversationId.value)) {
+      // 只有在有效的UUID时才添加会话ID
+      // 如果是临时ID（以local-开头），不传递给API
+      if (conversationId.value && 
+          !conversationId.value.toString().startsWith('local-') &&
+          isValidUUID(conversationId.value)) {
         params.conversation_id = conversationId.value;
       }
       
@@ -125,11 +134,40 @@ export function useMessages(conversationId) {
   const handleConversationId = (newId) => {
     if (!newId) return;
     
-    // 如果是从服务器接收到的ID，可能需要替换临时ID
-    if (conversationId.value && conversationId.value.toString().startsWith('temp-')) {
-      // 通知外部组件更新会话ID
-      conversationId.value = newId;
-      storageService.saveConversationId(newId);
+    // 如果当前ID已经是这个ID，不做任何处理
+    if (conversationId.value === newId) return;
+    
+    // 检查当前ID是否是临时ID
+    const isCurrentIdTemporary = conversationId.value && 
+                               conversationId.value.toString().startsWith('local-');
+    
+    // 检查是否有消息内容（表明这是当前正在进行的会话）
+    const hasMessages = messages.value.length > 0;
+    
+    // 如果当前是临时ID、有消息内容（表明是当前会话）、且收到了真实ID，才执行ID替换
+    // 这确保只有在用户发送第一条消息后收到服务器响应时才会替换ID
+    if (isCurrentIdTemporary && hasMessages && isValidUUID(newId)) {
+      // 记录原始的临时ID
+      const oldTempId = conversationId.value;
+      
+      console.log(`替换临时ID ${oldTempId} 为真实ID ${newId}`);
+      
+      // 使用updateTempIdToReal函数无感更新ID
+      if (typeof updateTempIdToReal === 'function') {
+        // 使用这个函数将临时ID更新为真实ID，同时从会话列表中移除临时会话
+        updateTempIdToReal(oldTempId, newId);
+      } else {
+        // 如果没有提供updateTempIdToReal函数，则按原来的方式更新
+        conversationId.value = newId;
+        storageService.saveConversationId(newId);
+        
+        // 延迟更新会话列表
+        setTimeout(() => {
+          if (typeof loadConversations === 'function') {
+            loadConversations();
+          }
+        }, 0);
+      }
     }
   };
   
@@ -159,12 +197,13 @@ export function useMessages(conversationId) {
     
     try {
       isLoadingHistory.value = true;
+      
+      // 开始加载前先清空消息列表，避免显示之前的消息
+      messages.value = [];
+      
       const { data } = await agriAIApi.getMessages(convoId, userId.value);
       
       if (data && data.data && data.data.length > 0) {
-        // 清空当前消息
-        messages.value = [];
-        
         // 按时间顺序添加消息
         data.data.sort((a, b) => a.created_at - b.created_at).forEach(msg => {
           // 用户消息
@@ -229,13 +268,36 @@ export function useMessages(conversationId) {
     }
   };
   
-  // 监听会话ID变化，加载历史消息
-  watch(conversationId, (newId) => {
-    if (newId && isValidUUID(newId)) {
+  // 监听conversationId的变化
+  watch(conversationId, (newId, oldId) => {
+    console.log(`对话ID变更: ${oldId} -> ${newId}`);
+    
+    // 如果新ID为空，直接返回
+    if (!newId) return;
+    
+    // 检查ID变化类型
+    const isFromTempToReal = oldId?.startsWith('local-') && isValidUUID(newId);
+    const isNewTempChat = newId?.startsWith('local-');
+    const isExistingChat = isValidUUID(newId);
+    
+    // 如果是从临时ID更新为真实ID，保留当前消息状态
+    if (isFromTempToReal && messages.value.length > 0) {
+      console.log(`从临时ID更新为真实ID: ${oldId} -> ${newId}, 保留当前消息状态`);
+      // 不重新加载消息，保持当前状态
+      return;
+    }
+    
+    // 处理新的临时聊天（清空消息）
+    if (isNewTempChat) {
+      console.log(`切换到新的临时对话: ${newId}, 清空消息列表`);
+      messages.value = [];
+      return;
+    }
+    
+    // 处理现有的聊天（加载历史消息）
+    if (isExistingChat) {
+      console.log(`切换到现有对话: ${newId}, 加载历史消息`);
       loadHistoryMessages(newId);
-    } else if (!newId) {
-      // 如果会话ID被清空，显示默认问候消息
-      showDefaultGreeting();
     }
   });
   
