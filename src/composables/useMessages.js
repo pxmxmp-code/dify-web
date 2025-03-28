@@ -4,15 +4,7 @@ import storageService from '../utils/storage';
 
 export function useMessages(conversationId) {
   // 状态变量
-  const messages = ref([
-    {
-      id: Date.now(),
-      content: "您好，我是农业十五五规划AI助手。我可以帮助您分析数据、制定规划方案、预测趋势和提供政策建议。请问有什么可以帮助您的？",
-      sender: "ai",
-      timestamp: new Date(),
-      hasReferences: true
-    }
-  ]);
+  const messages = ref([]);
   const isTyping = ref(false);
   const isLoadingHistory = ref(false);
   const showReferences = ref(null);
@@ -212,18 +204,7 @@ export function useMessages(conversationId) {
   
   // 显示默认问候消息
   const showDefaultGreeting = () => {
-    const cachedIntroduction = localStorage.getItem('cached_introduction') || 
-      "您好，我是农业十五五规划AI助手。我可以帮助您分析数据、制定规划方案、预测趋势和提供政策建议。";
-    
-    messages.value = [
-      {
-        id: Date.now(),
-        content: cachedIntroduction,
-        sender: "ai",
-        timestamp: new Date(),
-        hasReferences: true
-      }
-    ];
+    messages.value = [];
   };
   
   // 切换引用面板

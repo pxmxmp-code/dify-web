@@ -20,10 +20,6 @@ export function useConversation() {
     isCreatingChat.value = true;
     
     try {
-      // 使用已缓存的introduction或默认问候语
-      const cachedIntroduction = localStorage.getItem('cached_introduction') || 
-        "您好，我是农业十五五规划AI助手。我可以帮助您分析数据、制定规划方案、预测趋势和提供政策建议。";
-      
       // 创建临时会话
       const tempId = 'temp-' + Date.now();
       const tempConversation = {
@@ -56,10 +52,9 @@ export function useConversation() {
       // 关闭创建状态
       isCreatingChat.value = false;
       
-      // 返回临时ID和问候语，供调用者更新UI
+      // 返回临时ID
       return {
-        conversationId: tempId,
-        greeting: cachedIntroduction
+        conversationId: tempId
       };
     } catch (error) {
       console.error('创建新会话失败:', error);
@@ -194,10 +189,7 @@ export function useConversation() {
       // 获取应用参数
       const { data } = await agriAIApi.getParameters(userId.value);
       
-      // 缓存introduction，供后续使用
-      if (data && data.introduction) {
-        localStorage.setItem('cached_introduction', data.introduction);
-      }
+      // 不再缓存introduction
     } catch (error) {
       console.error('初始化应用失败:', error);
     }
