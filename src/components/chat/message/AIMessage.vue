@@ -8,6 +8,30 @@
     
     <!-- 消息气泡 -->
     <div class="max-w-[80%] bg-white text-gray-800 border border-green-100 rounded-2xl rounded-tl-sm shadow-md">
+      <!-- 思考过程展示 -->
+      <div v-if="hasThinking" class="border-b border-green-100">
+        <div 
+          class="px-5 py-2 text-gray-500 text-xs flex items-center cursor-pointer hover:bg-green-50 transition-colors duration-200"
+          @click="toggleThinking"
+        >
+          <ChevronDownIcon v-if="!showThinking" class="h-3 w-3 mr-1" />
+          <ChevronUpIcon v-else class="h-3 w-3 mr-1" />
+          <BrainIcon class="h-3 w-3 mr-1 text-gray-400" />
+          <span class="font-medium">AI思考过程</span>
+          <span class="ml-1 text-gray-400">({{ thinkingDuration }}s)</span>
+        </div>
+        <div 
+          v-show="showThinking" 
+          class="px-5 py-3 text-xs text-gray-500 bg-gray-50 overflow-auto transition-all duration-300 ease-in-out"
+          style="max-height: 300px;"
+        >
+          <div class="border-l-2 border-gray-300 pl-3">
+            <div class="text-gray-400 italic mb-2">以下是AI的思考过程，非最终回答：</div>
+            <div class="markdown-content" v-html="renderedThinking"></div>
+          </div>
+        </div>
+      </div>
+      
       <!-- 消息内容 -->
       <div class="px-5 py-4">
         <div class="text-sm markdown-content ai-message-content" v-html="renderedContent"></div>
@@ -56,12 +80,15 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { 
   Leaf as LeafIcon,
   Clock as ClockIcon,
   FileText as FileTextIcon,
-  Sparkles as SparklesIcon
+  Sparkles as SparklesIcon,
+  ChevronDown as ChevronDownIcon,
+  ChevronUp as ChevronUpIcon,
+  Brain as BrainIcon
 } from 'lucide-vue-next';
 import FeedbackButtons from './FeedbackButtons.vue';
 import { useMarkdownRenderer } from '../../../composables/useMarkdownRenderer';
@@ -73,7 +100,10 @@ export default {
     ClockIcon,
     FileTextIcon,
     SparklesIcon,
-    FeedbackButtons
+    ChevronDownIcon,
+    ChevronUpIcon,
+    FeedbackButtons,
+    BrainIcon
   },
   props: {
     message: {
@@ -88,13 +118,51 @@ export default {
   emits: ['toggle-references', 'feedback'],
   setup(props) {
     const { renderMarkdown } = useMarkdownRenderer();
+    const showThinking = ref(false);
     
-    const renderedContent = computed(() => {
-      return renderMarkdown(props.message.content);
+    // 提取思考内容和正式内容
+    const thinkingContent = computed(() => {
+      const thinkMatch = props.message.content.match(/<think>([\s\S]*?)<\/think>/);
+      return thinkMatch ? thinkMatch[1].trim() : '';
     });
     
+    const actualContent = computed(() => {
+      return props.message.content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    });
+    
+    // 是否有思考内容
+    const hasThinking = computed(() => {
+      return thinkingContent.value.length > 0;
+    });
+    
+    // 渲染Markdown内容
+    const renderedContent = computed(() => {
+      return renderMarkdown(actualContent.value);
+    });
+    
+    const renderedThinking = computed(() => {
+      return renderMarkdown(thinkingContent.value);
+    });
+    
+    // 模拟的思考时间（实际应用中可能需要从后端获取）
+    const thinkingDuration = computed(() => {
+      // 根据思考内容长度计算模拟时间，实际使用时可从后端获取真实值
+      return (thinkingContent.value.length / 100).toFixed(1);
+    });
+    
+    // 切换思考内容显示状态
+    const toggleThinking = () => {
+      showThinking.value = !showThinking.value;
+    };
+    
     return {
-      renderedContent
+      renderedContent,
+      renderedThinking,
+      hasThinking,
+      showThinking,
+      thinkingContent,
+      thinkingDuration,
+      toggleThinking
     };
   },
   methods: {
@@ -113,6 +181,31 @@ export default {
 
 .ai-message-content :deep(*) {
   opacity: 1;
+}
+
+/* 思考内容样式 */
+.markdown-content :deep(p) {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.markdown-content :deep(ul), 
+.markdown-content :deep(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4) {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 /* 移除所有打字机动画和渐变效果 */
