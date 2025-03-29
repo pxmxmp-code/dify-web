@@ -190,14 +190,30 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
       
       console.log(`替换临时ID ${oldTempId} 为真实ID ${newId}`);
       
+      // 获取用户的第一条消息内容用于重命名会话
+      const firstUserMessage = messages.value.find(msg => msg.sender === 'user');
+      let sessionName = '新会话';
+      
+      if (firstUserMessage) {
+        // 获取用户消息的前10个字符，超过则显示...
+        const contentPreview = firstUserMessage.content.substring(0, 10);
+        sessionName = contentPreview + (firstUserMessage.content.length > 10 ? '...' : '');
+      }
+      
       // 使用updateTempIdToReal函数无感更新ID
       if (typeof updateTempIdToReal === 'function') {
         // 使用这个函数将临时ID更新为真实ID，同时从会话列表中移除临时会话
-        updateTempIdToReal(oldTempId, newId);
+        updateTempIdToReal(oldTempId, newId, sessionName);
+        
+        // 调用后端API重命名会话
+        renameConversation(newId, sessionName);
       } else {
         // 如果没有提供updateTempIdToReal函数，则按原来的方式更新
         conversationId.value = newId;
         storageService.saveConversationId(newId);
+        
+        // 仍然调用重命名API
+        renameConversation(newId, sessionName);
         
         // 延迟更新会话列表
         setTimeout(() => {
@@ -206,6 +222,16 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
           }
         }, 0);
       }
+    }
+  };
+  
+  // 重命名会话
+  const renameConversation = async (convoId, name) => {
+    try {
+      await agriAIApi.renameConversation(convoId, name, userId.value, false);
+      console.log(`会话 ${convoId} 已重命名为: ${name}`);
+    } catch (error) {
+      console.error('重命名会话失败:', error);
     }
   };
   
