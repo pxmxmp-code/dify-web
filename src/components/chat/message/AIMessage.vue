@@ -10,7 +10,7 @@
     <div class="max-w-[80%] bg-white text-gray-800 border border-green-100 rounded-2xl rounded-tl-sm shadow-md">
       <!-- 消息内容 -->
       <div class="px-5 py-4">
-        <div class="text-sm markdown-content" v-html="renderedContent"></div>
+        <div class="text-sm markdown-content ai-message-content" v-html="renderedContent"></div>
       </div>
       
       <!-- 消息底部 -->
@@ -24,10 +24,13 @@
           <!-- 引用文档按钮 -->
           <button 
             v-if="message.hasReferences"
-            class="ml-2 text-green-500 hover:text-green-600 transform transition-transform duration-200 hover:scale-110"
+            class="ml-2 flex items-center text-green-500 hover:text-green-600 transform transition-transform duration-200 hover:scale-110"
             @click="$emit('toggle-references', message.id)"
           >
             <FileTextIcon class="h-3 w-3" />
+            <span v-if="message.referencesCount" class="ml-1 text-xs">
+              {{ message.referencesCount }}
+            </span>
           </button>
         </div>
         
@@ -104,4 +107,56 @@ export default {
 
 <style scoped>
 /* AI消息容器的样式可在此添加 */
+.ai-message-content {
+  min-height: 20px;
+}
+
+.ai-message-content :deep(*) {
+  opacity: 1;
+}
+
+/* 移除所有打字机动画和渐变效果 */
+
+/* 代码块样式，但无动画 */
+.ai-message-content :deep(pre) {
+  border: 1px solid rgba(226, 232, 240, 1);
+  border-radius: 0.375rem;
+  background-color: rgba(240, 247, 240, 1);
+}
+
+.ai-message-content :deep(code:not(pre code)) {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  color: #2e7d32;
+  background-color: rgba(240, 247, 240, 1);
+}
+
+.ai-message-content :deep(pre code) {
+  background: transparent;
+}
+
+/* 链接和代码高亮有下划线动画 - 保留交互效果但移除渐变 */
+.ai-message-content :deep(a), 
+.ai-message-content :deep(code) {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ai-message-content :deep(a::after), 
+.ai-message-content :deep(code::after) {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+
+.ai-message-content :deep(a:hover::after),
+.ai-message-content :deep(code:hover::after) {
+  width: 100%;
+}
 </style> 

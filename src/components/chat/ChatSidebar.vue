@@ -12,14 +12,15 @@
     <button 
       class="flex items-center justify-start mb-3 w-full py-2 px-4 bg-white border border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 rounded-md"
       @click="$emit('new-chat')"
-      :disabled="isCreatingChat"
+      :disabled="isCreatingChat || isResponding"
       :class="{ 
-        'transform hover:scale-[1.02] active:scale-[0.98]': !isCreatingChat,
-        'opacity-50 cursor-not-allowed': isCreatingChat 
+        'transform hover:scale-[1.02] active:scale-[0.98]': !isCreatingChat && !isResponding,
+        'opacity-50 cursor-not-allowed': isCreatingChat || isResponding
       }"
     >
       <PlusIcon class="h-4 w-4 mr-2" />
-      {{ isCreatingChat ? '创建中...' : '新对话' }}
+      <span v-if="isResponding">AI正在回复...</span>
+      <span v-else>{{ isCreatingChat ? '创建中...' : '新对话' }}</span>
     </button>
     
     <!-- 会话列表 -->
@@ -31,9 +32,10 @@
           :key="conversation.id"
           class="conversation-item flex w-full items-center group justify-between py-2 px-4 text-gray-600 hover:text-gray-900 hover:bg-green-50 transition-colors duration-200 rounded-md cursor-pointer"
           :class="{ 
-            'bg-green-50 text-green-700 active-conversation': conversation.id === conversationId 
+            'bg-green-50 text-green-700 active-conversation': conversation.id === conversationId,
+            'opacity-60 cursor-not-allowed': isResponding && conversation.id !== conversationId
           }"
-          @click="$emit('switch-conversation', conversation.id, conversation.name)"
+          @click="handleConversationClick(conversation)"
         >
           <div class="flex items-center flex-1 min-w-0 text-left">
             <MessageSquareIcon class="h-4 w-4 mr-2 flex-shrink-0 text-green-500" />
@@ -42,6 +44,7 @@
           
           <button 
             class="ml-2 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity duration-200 flex-shrink-0"
+            :class="{ 'pointer-events-none opacity-30': isResponding && conversation.id === conversationId }"
             @click.stop="$emit('delete-conversation', conversation.id)"
           >
             <XIcon class="h-3.5 w-3.5" />
@@ -109,9 +112,24 @@ export default {
     isCreatingChat: {
       type: Boolean,
       default: false
+    },
+    isResponding: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['new-chat', 'switch-conversation', 'delete-conversation']
+  emits: ['new-chat', 'switch-conversation', 'delete-conversation'],
+  methods: {
+    handleConversationClick(conversation) {
+      // 如果AI正在回复且不是当前会话，忽略点击
+      if (this.isResponding && conversation.id !== this.conversationId) {
+        return;
+      }
+      
+      // 否则触发切换事件
+      this.$emit('switch-conversation', conversation.id, conversation.name);
+    }
+  }
 }
 </script>
 

@@ -10,6 +10,8 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
   const showReferences = ref(null);
   const referenceDocuments = ref([]);
   const currentTaskId = ref('');
+  // 新增：标记AI是否正在响应（包括正在输入和其他处理过程）
+  const isResponding = ref(false);
   
   // 标记是否正在进行ID更新，避免重复加载
   const isUpdatingId = ref(false);
@@ -22,7 +24,7 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
   
   // 发送消息
   const handleSendMessage = async (content) => {
-    if (!content.trim() || isTyping.value) return;
+    if (!content.trim() || isResponding.value) return;
     
     // 添加用户消息到界面
     const userMessage = {
@@ -34,8 +36,9 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
     
     messages.value.push(userMessage);
     
-    // 显示AI正在输入状态
+    // 显示AI正在输入状态和响应状态
     isTyping.value = true;
+    isResponding.value = true;
     
     try {
       // 准备收集AI回复的完整内容
@@ -50,20 +53,52 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
           if (isTyping.value) {
             isTyping.value = false;
             messageId = data.message_id;
+            
+            // 检查并处理回答中的引用文档内容
+            const { cleanedAnswer, extractedReferences } = extractReferencesFromAnswer(data.answer || '');
+            
+            // 计算引用文档数量并判断是否真的有引用文档
+            const extractedDocs = extractedReferences ? processExtractedReferences(extractedReferences) : [];
+            const hasRealReferences = extractedDocs.length > 0;
+            const extractedReferencesCount = extractedDocs.length;
+            
             messages.value.push({
               id: messageId || Date.now(),
-              content: data.answer || '',  // 初始内容为第一个块的内容
+              content: cleanedAnswer,  // 使用清理后的内容
               sender: "ai",
               timestamp: new Date(),
-              hasReferences: false
+              hasReferences: hasRealReferences,
+              referencesCount: hasRealReferences ? extractedReferencesCount : 0
             });
-            fullAnswer = data.answer || '';
+            
+            // 如果确实提取到了引用文档内容，则更新引用文档
+            if (hasRealReferences) {
+              referenceDocuments.value = extractedDocs;
+            }
+            
+            fullAnswer = cleanedAnswer;
           } else {
+            // 对于后续消息块，也需要处理可能包含的引用文档内容
+            const { cleanedAnswer, extractedReferences } = extractReferencesFromAnswer(data.answer || '');
+            
             // 后续消息块，更新最后一条消息内容
-            fullAnswer += data.answer;
+            fullAnswer += cleanedAnswer;
             const lastMessage = messages.value[messages.value.length - 1];
             if (lastMessage.sender === 'ai') {
               lastMessage.content = fullAnswer;
+              
+              // 如果在中间消息块中发现引用文档，也需要先检查是否真的有引用文档
+              if (extractedReferences) {
+                const extractedDocs = processExtractedReferences(extractedReferences);
+                const hasRealReferences = extractedDocs.length > 0;
+                
+                // 只有真的有引用文档时才更新状态
+                if (hasRealReferences && !lastMessage.hasReferences) {
+                  lastMessage.hasReferences = true;
+                  lastMessage.referencesCount = extractedDocs.length;
+                  referenceDocuments.value = extractedDocs;
+                }
+              }
             }
           }
           
@@ -77,6 +112,7 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
         message_end: (data) => {
           // 确保波点已隐藏
           isTyping.value = false;
+          isResponding.value = false;  // 设置响应结束状态
           currentTaskId.value = '';
           
           // 处理引用资源
@@ -87,6 +123,7 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
         error: (data) => {
           console.error('API错误:', data);
           isTyping.value = false;
+          isResponding.value = false;  // 错误时也需要结束响应状态
           // 显示错误消息
           messages.value.push({
             id: Date.now(),
@@ -119,6 +156,7 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
     } catch (error) {
       console.error('发送消息失败:', error);
       isTyping.value = false;
+      isResponding.value = false;  // 捕获到错误时也需要结束响应状态
       // 显示错误消息
       messages.value.push({
         id: Date.now(),
@@ -173,17 +211,131 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
   
   // 处理引用资源
   const handleReferences = (data) => {
-    if (data.metadata && data.metadata.retriever_resources) {
-      referenceDocuments.value = data.metadata.retriever_resources;
+    if (data.metadata && data.metadata.retriever_resources && data.metadata.retriever_resources.length > 0) {
+      // 只有在有实际引用资源时才处理
+      // 如果之前已经从回复中提取了引用内容，则与API返回的资源合并
+      let totalReferencesCount = 0;
       
-      // 更新最后一条AI消息，添加引用标记
+      if (referenceDocuments.value.length > 0) {
+        const apiResources = data.metadata.retriever_resources.map(resource => {
+          return {
+            ...resource,
+            fromApi: true // 标记来源于API的资源
+          };
+        });
+        referenceDocuments.value = [...referenceDocuments.value, ...apiResources];
+        totalReferencesCount = referenceDocuments.value.length;
+      } else {
+        referenceDocuments.value = data.metadata.retriever_resources;
+        totalReferencesCount = data.metadata.retriever_resources.length;
+      }
+      
+      // 更新最后一条AI消息，添加引用标记和数量
       if (messages.value.length > 0) {
         const lastMessage = messages.value[messages.value.length - 1];
         if (lastMessage.sender === 'ai') {
           lastMessage.hasReferences = true;
+          
+          // 如果已经设置了引用数量，则累加API引用数量
+          if (lastMessage.referencesCount) {
+            lastMessage.referencesCount += data.metadata.retriever_resources.length;
+          } else {
+            lastMessage.referencesCount = totalReferencesCount;
+          }
         }
       }
     }
+  };
+  
+  // 提取回复中的引用文档内容
+  const extractReferencesFromAnswer = (answer) => {
+    // 检查是否包含"# 农业知识参考资料"标记
+    const referenceMarker = "# 农业知识参考资料";
+    const index = answer.indexOf(referenceMarker);
+    
+    if (index === -1) {
+      // 没有找到引用标记，返回原始回答
+      return { cleanedAnswer: answer, extractedReferences: null };
+    }
+    
+    // 分离回答内容和引用文档
+    const cleanedAnswer = answer.substring(0, index).trim();
+    const extractedReferences = answer.substring(index).trim();
+    
+    // 检查提取的引用文档是否包含"没有找到与您问题相关的信息"
+    if (extractedReferences.includes("很抱歉，没有找到与您问题相关的信息")) {
+      // 有引用文档标记但内容是没有找到相关信息，返回清理后的回答但标记为无引用
+      return { cleanedAnswer, extractedReferences: null };
+    }
+    
+    return { cleanedAnswer, extractedReferences };
+  };
+  
+  // 处理提取的引用文档，转换为结构化数据
+  const processExtractedReferences = (referencesText) => {
+    // 分析引用文档文本，将其转换为结构化数据
+    const references = [];
+    
+    // 如果引用为空或者包含"没有找到相关信息"的文本，返回空数组
+    if (!referencesText || referencesText.includes("很抱歉，没有找到与您问题相关的信息")) {
+      return references;
+    }
+    
+    // 使用正则表达式匹配各个部分
+    const sections = referencesText.split(/^## /m).filter(Boolean);
+    
+    // 第一个部分应该是标题"农业知识参考资料"，可以跳过或单独处理
+    if (sections.length > 0) {
+      const headerSection = sections[0];
+      if (headerSection.trim() === "农业知识参考资料") {
+        sections.shift(); // 移除标题部分
+      }
+    }
+    
+    // 如果没有实际章节，返回空数组
+    if (sections.length === 0) {
+      return references;
+    }
+    
+    // 处理各个部分
+    for (const section of sections) {
+      // 提取部分标题和内容
+      const sectionTitleMatch = section.match(/^(.+?)\n\n([\s\S]+)/);
+      
+      if (sectionTitleMatch) {
+        const [, sectionTitle, sectionContent] = sectionTitleMatch;
+        
+        // 使用正则表达式匹配各个文档条目
+        const itemRegex = /---\n\*\*文档\*\*: ([^\n]+)(?:\n\*\*来源\*\*: ([^\n]+))?(?:\n\*\*相关度\*\*: ([^\n]+))?\n\n([\s\S]+?)(?=\n---|\n$|$)/g;
+        
+        let match;
+        while ((match = itemRegex.exec(sectionContent)) !== null) {
+          const [, documentName, datasetName, score, content] = match;
+          
+          references.push({
+            document_name: documentName.trim(),
+            dataset_name: datasetName ? datasetName.trim() : "农业知识库",
+            score: score ? parseFloat(score) : 1.0,
+            content: content.trim(),
+            category: sectionTitle.trim(),
+            fromTemplate: true // 标记来源于模板的资源
+          });
+        }
+        
+        // 如果没有匹配到任何文档条目，但有内容，则添加整个部分作为一个条目
+        if (references.length === 0 && sectionContent.trim() !== "") {
+          references.push({
+            document_name: sectionTitle.trim(),
+            dataset_name: "农业知识库",
+            content: sectionContent.trim(),
+            category: sectionTitle.trim(),
+            fromTemplate: true
+          });
+        }
+      }
+    }
+    
+    return references;
   };
   
   // 加载历史消息
@@ -219,14 +371,49 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
           
           // AI回复
           if (msg.answer) {
-            messages.value.push({
+            // 检查并处理历史消息中的引用文档内容
+            const { cleanedAnswer, extractedReferences } = extractReferencesFromAnswer(msg.answer);
+            
+            // 计算引用文档数量
+            let referencesCount = 0;
+            let hasRealReferences = false;
+            
+            // 如果有API返回的引用文档，计入数量
+            if (msg.retriever_resources && msg.retriever_resources.length > 0) {
+              referencesCount += msg.retriever_resources.length;
+              hasRealReferences = true;
+            }
+            
+            // 如果有提取的引用文档，检查是否真的有内容
+            if (extractedReferences) {
+              const extractedDocs = processExtractedReferences(extractedReferences);
+              if (extractedDocs.length > 0) {
+                referencesCount += extractedDocs.length;
+                hasRealReferences = true;
+              }
+            }
+            
+            // 创建消息对象
+            const aiMessage = {
               id: msg.id + '-response',
-              content: msg.answer,
+              content: cleanedAnswer, // 使用清理后的内容
               sender: 'ai',
               timestamp: new Date(msg.created_at * 1000),
-              hasReferences: msg.retriever_resources && msg.retriever_resources.length > 0,
+              hasReferences: hasRealReferences,
+              referencesCount: hasRealReferences ? referencesCount : 0,
               feedback: msg.feedback ? msg.feedback.rating : null
-            });
+            };
+            
+            // 添加消息到列表
+            messages.value.push(aiMessage);
+            
+            // 如果提取到了引用文档内容，则存储于消息对象中
+            if (extractedReferences) {
+              const extractedDocs = processExtractedReferences(extractedReferences);
+              if (extractedDocs.length > 0) {
+                aiMessage.extractedReferences = extractedDocs;
+              }
+            }
           }
         });
       } else {
@@ -252,6 +439,17 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
       showReferences.value = null;
     } else {
       showReferences.value = messageId;
+      
+      // 查找对应的消息
+      const message = messages.value.find(msg => msg.id === messageId);
+      
+      // 如果消息存在且有提取的引用
+      if (message && message.extractedReferences) {
+        referenceDocuments.value = message.extractedReferences;
+      } else if (message && message.hasReferences) {
+        // 如果没有提取的引用但标记为有引用，可能需要从API获取
+        // 这里可能需要添加获取引用资源的逻辑
+      }
     }
   };
   
@@ -261,11 +459,17 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
       try {
         await agriAIApi.stopResponse(currentTaskId.value, userId.value);
         isTyping.value = false;
+        isResponding.value = false;  // 手动停止响应也需要更新状态
         currentTaskId.value = '';
       } catch (error) {
         console.error('停止响应失败:', error);
       }
     }
+  };
+  
+  // 检查是否可以切换会话
+  const canSwitchConversation = () => {
+    return !isResponding.value;
   };
   
   // 监听conversationId的变化
@@ -275,8 +479,14 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
     // 如果新ID为空，直接返回
     if (!newId) return;
     
-    // 检查ID变化类型
+    // AI正在响应时，不允许切换会话（但允许临时ID更新为真实ID的情况）
     const isFromTempToReal = oldId?.startsWith('local-') && isValidUUID(newId);
+    if (isResponding.value && !isFromTempToReal) {
+      console.log('AI正在响应，不允许切换会话');
+      return;
+    }
+    
+    // 检查ID变化类型
     const isNewTempChat = newId?.startsWith('local-');
     const isExistingChat = isValidUUID(newId);
     
@@ -312,6 +522,8 @@ export function useMessages(conversationId, loadConversations, updateTempIdToRea
     isLoadingHistory,
     showReferences,
     referenceDocuments,
+    isResponding,         // 暴露响应状态
+    canSwitchConversation, // 暴露检查函数
     handleSendMessage,
     loadHistoryMessages,
     stopResponse,

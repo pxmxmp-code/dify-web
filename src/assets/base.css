@@ -1,1 +1,60 @@
 @import "tailwindcss";
+
+/* 全局表单样式 */
+:root {
+    --primary-color: rgb(34, 197, 94);
+    --primary-light: rgba(34, 197, 94, 0.15);
+    --primary-border: rgba(34, 197, 94, 0.6);
+    --primary-hover: rgba(34, 197, 94, 0.4);
+}
+
+/* 输入框全局样式 */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input:not([type]),
+textarea,
+select {
+    @apply rounded-md border border-gray-200;
+    transition: all 0.3s ease;
+}
+
+/* 聚焦状态统一样式 */
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+    @apply outline-none;
+    box-shadow: 0 0 0 2px var(--primary-light);
+    border-color: var(--primary-border);
+}
+
+/* 悬停样式 */
+input[type="text"]:hover:not(:focus):not(:disabled),
+input[type="password"]:hover:not(:focus):not(:disabled),
+input[type="email"]:hover:not(:focus):not(:disabled),
+input[type="search"]:hover:not(:focus):not(:disabled),
+input[type="number"]:hover:not(:focus):not(:disabled),
+input[type="tel"]:hover:not(:focus):not(:disabled),
+input:not([type]):hover:not(:focus):not(:disabled),
+textarea:hover:not(:focus):not(:disabled),
+select:hover:not(:focus):not(:disabled) {
+    border-color: var(--primary-hover);
+}
+
+/* 禁用状态 */
+input:disabled,
+textarea:disabled,
+select:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: rgba(249, 250, 251, 0.5);
+}

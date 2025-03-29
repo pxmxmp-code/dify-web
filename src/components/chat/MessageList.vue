@@ -6,8 +6,8 @@
     </div>
     
     <!-- 消息列表 -->
-    <transition-group name="message">
-      <div v-for="message in messages" :key="message.id" class="relative">
+    <transition-group name="message" tag="div" class="space-y-6">
+      <div v-for="message in messages" :key="message.id" class="message-container relative">
         <!-- 消息气泡 - 根据发送方决定使用哪个组件 -->
         <div v-if="message.sender === 'user'">
           <UserMessage 
@@ -25,16 +25,20 @@
         </div>
         
         <!-- 引用文档面板 -->
-        <ReferencesPanel 
-          v-if="message.sender === 'ai' && showReferences === message.id"
-          :documents="referenceDocuments"
-          @close="$emit('toggle-references', null)"
-        />
+        <transition name="slide-fade">
+          <ReferencesPanel 
+            v-if="message.sender === 'ai' && showReferences === message.id"
+            :documents="referenceDocuments"
+            @close="$emit('toggle-references', null)"
+          />
+        </transition>
       </div>
     </transition-group>
     
     <!-- 打字指示器 -->
-    <TypingIndicator v-if="isTyping" />
+    <transition name="fade">
+      <TypingIndicator v-if="isTyping" />
+    </transition>
   </div>
 </template>
 
@@ -84,17 +88,47 @@ export default {
 </script>
 
 <style scoped>
-/* 消息动画 */
+/* 消息动画 - 减轻效果 */
 .message-enter-active,
 .message-leave-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
+
 .message-enter-from {
   opacity: 0;
-  transform: translateY(20px);
 }
+
 .message-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
+}
+
+/* 简化消息容器动画 */
+.message-container {
+  transition: opacity 0.2s ease;
+}
+
+/* 简化引用面板动画 */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+  max-height: 800px;
+  overflow: hidden;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+/* 简化打字指示器动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style> 

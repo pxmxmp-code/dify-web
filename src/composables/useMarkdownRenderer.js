@@ -56,10 +56,17 @@ export function useMarkdownRenderer() {
   const renderMarkdown = (content) => {
     if (!content) return '';
     
-    // 预处理：确保有序列表能被正确识别
+    // 预处理：检查并移除模板生成的引用文档部分
     let processedContent = content;
     
-    // 让有序列表更容易被识别 - 确保数字后面有空格
+    // 移除"# 农业知识参考资料"及其后的所有内容
+    const referenceMarker = "# 农业知识参考资料";
+    const referenceIndex = processedContent.indexOf(referenceMarker);
+    if (referenceIndex !== -1) {
+      processedContent = processedContent.substring(0, referenceIndex).trim();
+    }
+    
+    // 确保有序列表能被正确识别 - 确保数字后面有空格
     processedContent = processedContent.replace(/^(\d+)\.(?!\s)/gm, '$1. ');
     
     // 使用 marked 解析处理后的内容
