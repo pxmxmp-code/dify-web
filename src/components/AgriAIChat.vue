@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-[#f8faf8]">
+  <div class="flex h-screen bg-[#f8faf8] overflow-hidden">
     <!-- 侧边栏组件 -->
     <ChatSidebar 
       :recent-conversations="recentConversations" 
@@ -12,10 +12,10 @@
     />
     
     <!-- 主内容部分 -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col transition-all duration-300 ease-in-out">
       <!-- 标题栏 -->
-      <div class="border-b border-green-100 p-4 bg-white">
-        <h1 class="text-lg font-medium text-gray-800">农业十五五规划 AI</h1>
+      <div class="border-b border-green-100 p-4 bg-white flex items-center">
+        <h1 class="text-lg font-medium text-gray-800 flex-1">农业十五五规划 AI</h1>
       </div>
       
       <!-- 消息区域 -->
